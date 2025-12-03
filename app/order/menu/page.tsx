@@ -1,0 +1,294 @@
+'use client'
+
+import { useEffect, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { toast } from 'sonner'
+import { ArrowLeft, Minus, Plus, ShoppingCart } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
+
+type MenuItem = {
+  id: string
+  name: string
+  description: string
+  price: number
+  category: string
+  image_url: string
+  available: boolean
+}
+
+type CartItem = {
+  menu: MenuItem
+  quantity: number
+}
+
+function MenuPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tableNumber = searchParams.get('table')
+  const customerName = searchParams.get('name') || ''
+
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!tableNumber) {
+      router.push('/order/select-table')
+      return
+    }
+    fetchMenu()
+  }, [tableNumber])
+
+  const fetchMenu = async () => {
+    const { data, error } = await supabase
+      .from('menu')
+      .select('*')
+      .eq('available', true)
+      .order('category', { ascending: true })
+
+    if (error) {
+      toast.error('Gagal memuat menu')
+      console.error(error)
+    } else {
+      setMenuItems(data || [])
+    }
+    setLoading(false)
+  }
+
+  const addToCart = (menu: MenuItem) => {
+    const existingItem = cart.find((item) => item.menu.id === menu.id)
+    if (existingItem) {
+      setCart(
+        cart.map((item) =>
+          item.menu.id === menu.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        )
+      )
+    } else {
+      setCart([...cart, { menu, quantity: 1 }])
+    }
+    toast.success(`${menu.name} ditambahkan ke keranjang`)
+  }
+
+  const updateQuantity = (menuId: string, change: number) => {
+    setCart(
+      cart
+        .map((item) =>
+          item.menu.id === menuId
+            ? { ...item, quantity: item.quantity + change }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    )
+  }
+
+  const getCartTotal = () => {
+    return cart.reduce((total, item) => total + item.menu.price * item.quantity, 0)
+  }
+
+  const handleSubmitOrder = async () => {
+    if (cart.length === 0) {
+      toast.error('Keranjang masih kosong')
+      return
+    }
+
+    setSubmitting(true)
+
+    try {
+      const totalAmount = getCartTotal()
+
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          table_number: parseInt(tableNumber!),
+          customer_name: customerName,
+          total_amount: totalAmount,
+          status: 'menunggu_pembayaran',
+        })
+        .select()
+        .single()
+
+      if (orderError) throw orderError
+
+      const orderItems = cart.map((item) => ({
+        order_id: order.id,
+        menu_id: item.menu.id,
+        quantity: item.quantity,
+        price: item.menu.price,
+        subtotal: item.menu.price * item.quantity,
+      }))
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems)
+
+      if (itemsError) throw itemsError
+
+      toast.success('Pesanan berhasil dibuat!')
+      router.push(`/order/success?orderId=${order.id}`)
+    } catch (error) {
+      console.error(error)
+      toast.error('Gagal membuat pesanan')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const categories = ['minuman', 'makanan', 'snack']
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
+        <div className="text-xl">Memuat menu...</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <Link href="/order/select-table">
+            <Button variant="ghost">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Kembali
+            </Button>
+          </Link>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">Meja {tableNumber}</h1>
+            {customerName && <p className="text-gray-600">{customerName}</p>}
+          </div>
+          <Badge variant="secondary" className="text-lg px-4 py-2">
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            {cart.length}
+          </Badge>
+        </div>
+
+        <Tabs defaultValue="minuman" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            {categories.map((cat) => (
+              <TabsTrigger key={cat} value={cat} className="capitalize text-base">
+                {cat}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {categories.map((category) => (
+            <TabsContent key={category} value={category}>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {menuItems
+                  .filter((item) => item.category === category)
+                  .map((item) => (
+                    <Card key={item.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                      {item.image_url && (
+                        <div className="relative w-full h-48">
+                          <Image
+                            src={item.image_url}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                        </div>
+                      )}
+                      <CardHeader>
+                        <CardTitle>{item.name}</CardTitle>
+                        <CardDescription>{item.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold text-amber-600">
+                          Rp {item.price.toLocaleString('id-ID')}
+                        </p>
+                      </CardContent>
+                      <CardFooter>
+                        <Button
+                          className="w-full bg-amber-600 hover:bg-amber-700"
+                          onClick={() => addToCart(item)}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Tambah
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+
+        {cart.length > 0 && (
+          <Card className="mt-8 sticky bottom-4 bg-white shadow-lg border-2 border-amber-200">
+            <CardHeader className="bg-amber-50 border-b">
+              <CardTitle>Keranjang Pesanan</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {cart.map((item) => (
+                <div key={item.menu.id} className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="font-medium">{item.menu.name}</p>
+                    <p className="text-sm text-gray-600">
+                      Rp {item.menu.price.toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateQuantity(item.menu.id, -1)}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-8 text-center font-medium">{item.quantity}</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateQuantity(item.menu.id, 1)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="w-24 text-right font-medium">
+                    Rp {(item.menu.price * item.quantity).toLocaleString('id-ID')}
+                  </div>
+                </div>
+              ))}
+              <div className="border-t pt-3 mt-3">
+                <div className="flex justify-between text-xl font-bold">
+                  <span>Total</span>
+                  <span className="text-amber-600">
+                    Rp {getCartTotal().toLocaleString('id-ID')}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button
+                className="w-full h-12 text-lg bg-green-600 hover:bg-green-700"
+                onClick={handleSubmitOrder}
+                disabled={submitting}
+              >
+                {submitting ? 'Memproses...' : 'Kirim Pesanan'}
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default function MenuPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MenuPageContent />
+    </Suspense>
+  )
+}
