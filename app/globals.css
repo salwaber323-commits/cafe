@@ -232,4 +232,55 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* Custom Button Styles - Coffee Theme */
+  .btn-primary {
+    background: linear-gradient(135deg, #B45309 0%, #92400E 50%, #78350F 100%);
+    color: white;
+    box-shadow: 0 4px 14px 0 rgba(180, 83, 9, 0.25);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #92400E 0%, #78350F 50%, #713F12 100%);
+    box-shadow: 0 6px 20px 0 rgba(180, 83, 9, 0.35);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px 0 rgba(180, 83, 9, 0.25);
+  }
+
+  .btn-secondary {
+    border: 2px solid rgba(255, 107, 53, 0.4);
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(251, 146, 60, 0.1) 100%);
+    color: #FF8C42;
+    backdrop-filter: blur(8px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-secondary:hover {
+    border-color: rgba(255, 107, 53, 0.6);
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.2) 0%, rgba(251, 146, 60, 0.2) 100%);
+    color: #FFA366;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px 0 rgba(255, 107, 53, 0.25);
+  }
+
+  .btn-secondary:active {
+    transform: translateY(0);
+  }
+
+  /* Smooth button transitions */
+  button {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Better focus states for accessibility */
+  button:focus-visible {
+    outline: 2px solid rgba(251, 191, 36, 0.6);
+    outline-offset: 2px;
+  }
 }

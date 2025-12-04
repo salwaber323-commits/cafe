@@ -110,7 +110,7 @@ function SuccessPageContent() {
               </Button>
             </Link>
             <Link href="/" className="flex-1">
-              <Button className="w-full h-12 bg-amber-600 hover:bg-amber-700">
+              <Button className="w-full h-12 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-medium shadow-lg shadow-amber-700/30 hover:shadow-amber-800/50 transition-all duration-300">
                 Kembali ke Beranda
               </Button>
             </Link>

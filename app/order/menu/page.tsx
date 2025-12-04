@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { ArrowLeft, Minus, Plus, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, ShoppingCart, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -210,11 +210,11 @@ function MenuPageContent() {
                       </CardContent>
                       <CardFooter>
                         <Button
-                          className="w-full bg-amber-600 hover:bg-amber-700"
+                          className="w-full bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-medium shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                           onClick={() => addToCart(item)}
                         >
                           <Plus className="mr-2 h-4 w-4" />
-                          Tambah
+                          Tambah ke Keranjang
                         </Button>
                       </CardFooter>
                     </Card>
@@ -271,11 +271,21 @@ function MenuPageContent() {
             </CardContent>
             <CardFooter>
               <Button
-                className="w-full h-12 text-lg bg-green-600 hover:bg-green-700"
+                className="w-full h-11 sm:h-12 text-base sm:text-lg bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-semibold shadow-xl shadow-amber-700/40 hover:shadow-amber-800/60 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 onClick={handleSubmitOrder}
                 disabled={submitting}
               >
-                {submitting ? 'Memproses...' : 'Kirim Pesanan'}
+                {submitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Memproses Pesanan...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <ShoppingCart className="w-4 h-4" />
+                    Kirim Pesanan
+                  </span>
+                )}
               </Button>
             </CardFooter>
           </Card>

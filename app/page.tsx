@@ -23,28 +23,41 @@ import {
   Users,
   Sparkles,
   ChevronRight,
-  Quote
+  Quote,
+  Menu,
+  X
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-// Enhanced Particle Background Component
+// Optimized Particle Background Component with throttling
 function ParticleBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animationFrameRef = useRef<number>()
+  const lastFrameTime = useRef<number>(0)
+  const throttleMs = 16 // ~60fps
 
   useEffect(() => {
     const canvas = canvasRef.current
-    const ctx = canvas?.getContext('2d')
+    const ctx = canvas?.getContext('2d', { alpha: false })
     
     if (!canvas || !ctx) return
 
     const resizeCanvas = () => {
-      if (canvas) {
-        canvas.width = window.innerWidth
-        canvas.height = window.innerHeight
+      if (canvas && ctx) {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2) // Limit DPR untuk performa
+        canvas.width = window.innerWidth * dpr
+        canvas.height = window.innerHeight * dpr
+        ctx.scale(dpr, dpr)
+        canvas.style.width = window.innerWidth + 'px'
+        canvas.style.height = window.innerHeight + 'px'
       }
     }
+    
     resizeCanvas()
-    window.addEventListener('resize', resizeCanvas)
+    const resizeObserver = new ResizeObserver(() => {
+      resizeCanvas()
+    })
+    resizeObserver.observe(canvas)
 
     class Particle {
       x: number
@@ -55,36 +68,33 @@ function ParticleBackground() {
       opacity: number
       life: number
       maxLife: number
-      width: number
-      height: number
 
       constructor(canvasWidth: number, canvasHeight: number) {
-        this.width = canvasWidth
-        this.height = canvasHeight
-        this.x = Math.random() * this.width
-        this.y = this.height + Math.random() * 100
-        this.size = Math.random() * 180 + 120
-        this.speedX = (Math.random() - 0.5) * 0.6
-        this.speedY = -Math.random() * 0.4 - 0.2
-        this.opacity = Math.random() * 0.12
+        this.x = Math.random() * canvasWidth
+        this.y = canvasHeight + Math.random() * 100
+        this.size = Math.random() * 120 + 80 // Reduced size
+        this.speedX = (Math.random() - 0.5) * 0.4
+        this.speedY = -Math.random() * 0.3 - 0.15
+        this.opacity = Math.random() * 0.08
         this.life = 0
-        this.maxLife = Math.random() * 250 + 150
+        this.maxLife = Math.random() * 200 + 100
       }
 
-      update() {
+      update(canvasWidth: number, canvasHeight: number) {
         this.x += this.speedX
         this.y += this.speedY
         this.life++
-        this.opacity = Math.sin((this.life / this.maxLife) * Math.PI) * 0.18
+        this.opacity = Math.sin((this.life / this.maxLife) * Math.PI) * 0.12
 
         if (this.y < -100) {
-          this.y = this.height + 100
-          this.x = Math.random() * this.width
+          this.y = canvasHeight + 100
+          this.x = Math.random() * canvasWidth
           this.life = 0
         }
       }
 
       draw(ctx: CanvasRenderingContext2D) {
+        ctx.save()
         ctx.beginPath()
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
         const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size)
@@ -92,34 +102,45 @@ function ParticleBackground() {
         gradient.addColorStop(0.5, `rgba(245, 158, 11, ${this.opacity * 0.5})`)
         gradient.addColorStop(1, `rgba(217, 119, 6, 0)`)
         ctx.fillStyle = gradient
-        ctx.filter = 'blur(70px)'
+        ctx.filter = 'blur(60px)'
         ctx.fill()
+        ctx.restore()
       }
     }
 
     const particles: Particle[] = []
-    for (let i = 0; i < 20; i++) {
+    const particleCount = 12 // Reduced from 20
+    if (canvas) {
+      for (let i = 0; i < particleCount; i++) {
       particles.push(new Particle(canvas.width, canvas.height))
+      }
     }
 
-    let animationId: number
-    const animate = () => {
+    const animate = (currentTime: number) => {
+      if (currentTime - lastFrameTime.current >= throttleMs) {
       if (canvas && ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+          const canvasWidth = canvas.width
+          const canvasHeight = canvas.height
+          ctx.clearRect(0, 0, canvasWidth, canvasHeight)
         
         particles.forEach(particle => {
-          particle.update()
+            particle.update(canvasWidth, canvasHeight)
           particle.draw(ctx)
         })
         
-        animationId = requestAnimationFrame(animate)
+          lastFrameTime.current = currentTime
+        }
       }
+      animationFrameRef.current = requestAnimationFrame(animate)
     }
-    animate()
+    
+    animationFrameRef.current = requestAnimationFrame(animate)
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas)
-      cancelAnimationFrame(animationId)
+      resizeObserver.disconnect()
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
     }
   }, [])
 
@@ -127,37 +148,39 @@ function ParticleBackground() {
     <canvas 
       ref={canvasRef} 
       className="fixed inset-0 w-full h-full pointer-events-none -z-10"
+      style={{ willChange: 'transform' }}
     />
   )
 }
 
-// Enhanced Stars background
+// Optimized Stars background with reduced count
 function StarsBackground() {
   const [stars, setStars] = useState<Array<{x: number, y: number, size: number, delay: number}>>([])
 
   useEffect(() => {
-    const newStars = Array.from({ length: 80 }, () => ({
+    // Reduced from 80 to 40 stars for better performance
+    const newStars = Array.from({ length: 40 }, () => ({
       x: Math.random() * 100,
       y: Math.random() * 100,
-      size: Math.random() * 2.5,
+      size: Math.random() * 2 + 1,
       delay: Math.random() * 3
     }))
     setStars(newStars)
   }, [])
 
   return (
-    <div className="fixed inset-0 -z-10">
+    <div className="fixed inset-0 -z-10" style={{ willChange: 'contents' }}>
       {stars.map((star, i) => (
         <div
           key={i}
-          className="absolute bg-white/70 rounded-full animate-pulse"
+          className="absolute bg-white/50 rounded-full"
           style={{
             left: `${star.x}%`,
             top: `${star.y}%`,
             width: `${star.size}px`,
             height: `${star.size}px`,
+            animation: `pulse ${2 + Math.random() * 2}s ease-in-out infinite`,
             animationDelay: `${star.delay}s`,
-            animationDuration: `${2 + Math.random() * 2}s`
           }}
         />
       ))}
@@ -167,6 +190,7 @@ function StarsBackground() {
 
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -175,10 +199,17 @@ export default function Home() {
   })
 
   useEffect(() => {
+    let ticking = false
     const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
       setIsScrolled(window.scrollY > 50)
+          ticking = false
+        })
+        ticking = true
+      }
     }
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
@@ -190,39 +221,99 @@ export default function Home() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-amber-950 to-orange-900 overflow-hidden">
+    <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-amber-950 to-orange-900 overflow-hidden" style={{ contentVisibility: 'auto' }}>
       {/* Enhanced Navbar */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled 
           ? 'backdrop-blur-xl bg-black/30 shadow-lg shadow-amber-500/10' 
           : 'backdrop-blur-sm bg-transparent'
       }`}>
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-3 sm:px-4">
           <div className="flex items-center justify-between h-20 border-b border-amber-300/10">
             <div className="flex items-center gap-3 group cursor-pointer">
               <div className="relative">
                 <Coffee className="h-8 w-8 text-amber-300 group-hover:rotate-12 transition-transform duration-300" />
                 <div className="absolute inset-0 bg-amber-300/20 blur-xl rounded-full group-hover:bg-amber-300/40 transition-all" />
               </div>
-              <h1 className="text-2xl font-bold text-amber-50 tracking-tight">Kopi & Kenangan</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-amber-50 tracking-tight">Kopi & Kenangan</h1>
             </div>
-            <div className="flex items-center gap-8">
-              <Link href="#about" className="text-sm text-amber-200 hover:text-amber-50 transition-colors font-medium hidden md:block">
+            
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center gap-8">
+              <Link href="#about" className="text-sm text-amber-200 hover:text-amber-50 transition-colors font-medium">
                 Tentang
               </Link>
-              <Link href="#facilities" className="text-sm text-amber-200 hover:text-amber-50 transition-colors font-medium hidden md:block">
+              <Link href="#facilities" className="text-sm text-amber-200 hover:text-amber-50 transition-colors font-medium">
                 Fasilitas
               </Link>
-              <Link href="#contact" className="text-sm text-amber-200 hover:text-amber-50 transition-colors font-medium hidden md:block">
+              <Link href="#contact" className="text-sm text-amber-200 hover:text-amber-50 transition-colors font-medium">
                 Kontak
               </Link>
-              <Link href="/order/select-table">
-                <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-6 py-2 text-sm rounded-full h-10 shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 transition-all duration-300 transform hover:scale-105">
-                  Pesan Sekarang
+              <Link href="/order/select-table" className="group">
+                <Button className="btn-primary px-5 py-2 text-sm rounded-full h-9 font-medium">
+                  <span className="flex items-center gap-1.5">
+                    Pesan Sekarang
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  </span>
                 </Button>
               </Link>
             </div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="text-amber-200 hover:text-amber-50 hover:bg-amber-500/10"
+              >
+                {mobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </Button>
+            </div>
           </div>
+
+          {/* Mobile Dropdown Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-amber-300/10 bg-black/50 backdrop-blur-xl">
+              <div className="flex flex-col py-4 space-y-2">
+                <Link 
+                  href="#about" 
+                  className="px-4 py-3 text-amber-200 hover:text-amber-50 hover:bg-amber-500/10 transition-colors font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Tentang
+                </Link>
+                <Link 
+                  href="#facilities" 
+                  className="px-4 py-3 text-amber-200 hover:text-amber-50 hover:bg-amber-500/10 transition-colors font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Fasilitas
+                </Link>
+                <Link 
+                  href="#contact" 
+                  className="px-4 py-3 text-amber-200 hover:text-amber-50 hover:bg-amber-500/10 transition-colors font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Kontak
+                </Link>
+                <div className="px-4 pt-2">
+                  <Link href="/order/select-table" onClick={() => setMobileMenuOpen(false)} className="group">
+                    <Button className="btn-primary w-full rounded-full font-medium">
+                      <span className="flex items-center justify-center gap-2">
+                        Pesan Sekarang
+                        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                      </span>
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -235,8 +326,8 @@ export default function Home() {
 
       {/* Hero Section - Dramatically Enhanced */}
       <section className="relative min-h-screen flex items-center justify-center pt-32 pb-20">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
+        <div className="container mx-auto px-3 sm:px-4 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center max-w-[95%] lg:max-w-7xl mx-auto">
             {/* Left Content */}
             <div className="text-left space-y-8">
               <Badge className="bg-amber-500/20 text-amber-200 border-amber-400/30 px-4 py-2 text-sm font-medium backdrop-blur-sm">
@@ -256,21 +347,23 @@ export default function Home() {
                 Setiap cangkir diracik dengan dedikasi dan rasa yang tak terlupakan.
               </p>
               
-              <div className="flex flex-wrap gap-4 pt-4">
-                <Link href="/order/select-table">
+              <div className="flex flex-wrap gap-3 sm:gap-4 pt-4">
+                <Link href="/order/select-table" className="group">
                   <Button 
                     size="lg" 
-                    className="bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 text-base px-10 py-7 h-auto rounded-full shadow-2xl shadow-amber-500/40 hover:shadow-amber-500/60 transition-all duration-300 transform hover:scale-105 font-semibold group"
+                    className="btn-primary text-sm sm:text-base px-6 sm:px-8 py-5 sm:py-6 h-auto rounded-full font-semibold group-hover:gap-2"
                   >
+                    <span className="flex items-center gap-2">
                     Pesan Sekarang
-                    <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
+                    </span>
                   </Button>
                 </Link>
-                <Link href="#about">
+                <Link href="#about" className="group">
                   <Button 
                     size="lg" 
                     variant="outline"
-                    className="border-2 border-amber-400/40 text-amber-100 hover:bg-amber-500/10 hover:border-amber-400/60 text-base px-10 py-7 h-auto rounded-full backdrop-blur-sm transition-all duration-300"
+                    className="btn-secondary text-sm sm:text-base px-6 sm:px-8 py-5 sm:py-6 h-auto rounded-full font-medium"
                   >
                     Pelajari Lebih Lanjut
                   </Button>
@@ -299,13 +392,17 @@ export default function Home() {
 
             {/* Right Image */}
             <div className="relative lg:block hidden">
-              <div className="relative animate-float">
+              <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-orange-500/30 rounded-3xl blur-3xl" />
-                <img
+                <Image
                   src="https://images.unsplash.com/photo-1605468596782-502ce2012ef0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTAwNDR8MHwxfHNlYXJjaHwxfHxjb2ZmZWUlMjBjdXAlMjBzdGVhbSUyMHdvb2RlbiUyMHRhYmxlfGVufDB8MHx8fDE3NjE2MzU4ODR8MA&ixlib=rb-4.1.0&q=85"
-                  alt="Steaming coffee cup - Denise Jans on Unsplash"
+                  alt="Steaming coffee cup"
+                  width={600}
+                  height={600}
                   className="relative rounded-3xl shadow-2xl w-full h-[600px] object-cover border border-amber-400/20"
-                  style={{ width: '100%', height: '600px' }}
+                  loading="eager"
+                  priority
+                  sizes="(max-width: 1024px) 0vw, 50vw"
                 />
                 <div className="absolute -bottom-6 -right-6 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-2xl backdrop-blur-sm border border-amber-400/30">
                   <div className="flex items-center gap-3">
@@ -323,39 +420,55 @@ export default function Home() {
       </section>
 
       {/* About Section - Enhanced */}
-      <section id="about" className="relative py-32">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
+      <section id="about" className="relative py-32" style={{ contentVisibility: 'auto' }}>
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="max-w-[95%] lg:max-w-6xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               {/* Image Grid */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-4">
-                  <img
+                  <div className="relative w-full h-48 rounded-2xl overflow-hidden shadow-xl border border-amber-400/20">
+                    <Image
                     src="https://images.unsplash.com/photo-1736496874375-33afc74639b6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTAwNDR8MHwxfHNlYXJjaHwxfHxjb2ZmZWUlMjBiZWFucyUyMHJvYXN0ZWQlMjB0ZXh0dXJlfGVufDB8MHx8fDE3NjE2MzU4ODR8MA&ixlib=rb-4.1.0&q=85"
-                    alt="Coffee beans - Niklas Håkonsen on Unsplash"
-                    className="rounded-2xl w-full h-48 object-cover shadow-xl border border-amber-400/20"
-                    style={{ width: '100%', height: '192px' }}
-                  />
-                  <img
+                      alt="Coffee beans"
+                      fill
+                      className="object-cover"
+                      loading="lazy"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  </div>
+                  <div className="relative w-full h-64 rounded-2xl overflow-hidden shadow-xl border border-amber-400/20">
+                    <Image
                     src="https://images.unsplash.com/photo-1751151015819-671ae8243e97?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTAwNDR8MHwxfHNlYXJjaHwyfHxjYWZlJTIwaW50ZXJpb3IlMjBtb2Rlcm4lMjBjb3p5fGVufDB8MHx8fDE3NjE2MzU4ODR8MA&ixlib=rb-4.1.0&q=85"
-                    alt="Cafe interior - Zoshua Colah on Unsplash"
-                    className="rounded-2xl w-full h-64 object-cover shadow-xl border border-amber-400/20"
-                    style={{ width: '100%', height: '256px' }}
-                  />
+                      alt="Cafe interior"
+                      fill
+                      className="object-cover"
+                      loading="lazy"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-4 pt-12">
-                  <img
+                  <div className="relative w-full h-64 rounded-2xl overflow-hidden shadow-xl border border-amber-400/20">
+                    <Image
                     src="https://images.unsplash.com/photo-1748012906249-37245d620d1c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTAwNDR8MHwxfHNlYXJjaHw3fHxiYXJpc3RhJTIwY29mZmVlJTIwbGF0dGUlMjBhcnQlMjBoYW5kc3xlbnwwfDF8fHwxNzYxNjM1ODg0fDA&ixlib=rb-4.1.0&q=85"
-                    alt="Barista making coffee - Sanket Deorukhkar on Unsplash"
-                    className="rounded-2xl w-full h-64 object-cover shadow-xl border border-amber-400/20"
-                    style={{ width: '100%', height: '256px' }}
-                  />
-                  <img
+                      alt="Barista making coffee"
+                      fill
+                      className="object-cover"
+                      loading="lazy"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  </div>
+                  <div className="relative w-full h-48 rounded-2xl overflow-hidden shadow-xl border border-amber-400/20">
+                    <Image
                     src="https://images.unsplash.com/photo-1706195546953-f3ac8d384a24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTAwNDR8MHwxfHNlYXJjaHw2fHxjb2ZmZWUlMjBjdXAlMjBzdGVhbSUyMHdvb2RlbiUyMHRhYmxlfGVufDB8MHx8fDE3NjE2MzU4ODR8MA&ixlib=rb-4.1.0&q=85"
-                    alt="Coffee cup - Elin Melaas on Unsplash"
-                    className="rounded-2xl w-full h-48 object-cover shadow-xl border border-amber-400/20"
-                    style={{ width: '100%', height: '192px' }}
-                  />
+                      alt="Coffee cup"
+                      fill
+                      className="object-cover"
+                      loading="lazy"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -409,8 +522,8 @@ export default function Home() {
       </section>
 
       {/* Facilities Section - Redesigned */}
-      <section id="facilities" className="relative py-32">
-        <div className="container mx-auto px-4">
+      <section id="facilities" className="relative py-32" style={{ contentVisibility: 'auto' }}>
+        <div className="container mx-auto px-3 sm:px-4">
           <div className="text-center mb-16 space-y-4">
             <Badge className="bg-amber-500/20 text-amber-200 border-amber-400/30 px-4 py-2 text-sm font-medium backdrop-blur-sm">
               Fasilitas & Layanan
@@ -423,7 +536,7 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-[95%] lg:max-w-6xl mx-auto">
             {[
               { 
                 icon: Wifi, 
@@ -487,9 +600,9 @@ export default function Home() {
       </section>
 
       {/* Testimonial Section - New */}
-      <section className="relative py-32">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
+      <section className="relative py-32" style={{ contentVisibility: 'auto' }}>
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="max-w-[95%] lg:max-w-4xl mx-auto">
             <Card className="glass-effect shadow-2xl rounded-3xl overflow-hidden border-amber-400/20">
               <CardContent className="p-12 text-center space-y-6">
                 <Quote className="w-16 h-16 text-amber-300/50 mx-auto" />
@@ -513,8 +626,8 @@ export default function Home() {
       </section>
 
       {/* Location Section - Enhanced */}
-      <section id="contact" className="relative py-32">
-        <div className="container mx-auto px-4">
+      <section id="contact" className="relative py-32" style={{ contentVisibility: 'auto' }}>
+        <div className="container mx-auto px-3 sm:px-4">
           <div className="text-center mb-16 space-y-4">
             <Badge className="bg-amber-500/20 text-amber-200 border-amber-400/30 px-4 py-2 text-sm font-medium backdrop-blur-sm">
               Lokasi & Kontak
@@ -524,16 +637,29 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-[95%] lg:max-w-6xl mx-auto">
             {/* Map */}
-            <div className="rounded-3xl overflow-hidden shadow-2xl border border-amber-400/20">
+            <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-400/30 bg-amber-900/20">
+              <div className="absolute inset-0 flex items-center justify-center bg-amber-900/10 z-10 pointer-events-none">
+                <div className="text-amber-200/50 text-sm">Memuat peta...</div>
+              </div>
+              <div className="relative w-full" style={{ paddingBottom: '75%' }}>
               <iframe 
-                src="https://maps.google.com/maps?width=100%25&height=400&hl=en&q=-6.200000,106.816666&t=&z=14&ie=UTF8&iwloc=B&output=embed"
-                className="w-full h-[400px]"
+                  src="https://maps.google.com/maps?width=100%25&height=600&hl=id&q=-6.200000,106.816666&t=&z=14&ie=UTF8&iwloc=B&output=embed"
+                  className="absolute top-0 left-0 w-full h-full border-0"
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-              />
+                  style={{ minHeight: '400px' }}
+                  onLoad={(e) => {
+                    const target = e.target as HTMLIFrameElement
+                    const parent = target.parentElement?.previousElementSibling as HTMLElement
+                    if (parent) {
+                      parent.style.display = 'none'
+                    }
+                  }}
+                />
+              </div>
             </div>
 
             {/* Info Cards */}
@@ -602,11 +728,11 @@ export default function Home() {
       </section>
 
       {/* Feedback Section - Enhanced */}
-      <section className="relative py-32">
+      <section className="relative py-32" style={{ contentVisibility: 'auto' }}>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/50 to-black pointer-events-none" />
 
-        <div className="container mx-auto px-4 relative z-10">
-          <Card className="max-w-4xl mx-auto glass-effect shadow-2xl overflow-hidden rounded-3xl border-amber-400/20">
+        <div className="container mx-auto px-3 sm:px-4 relative z-10">
+          <Card className="max-w-[95%] lg:max-w-4xl mx-auto glass-effect shadow-2xl overflow-hidden rounded-3xl border-amber-400/20">
             <CardContent className="p-10 md:p-12">
               <div className="text-center mb-10 space-y-4">
                 <Badge className="bg-amber-500/20 text-amber-200 border-amber-400/30 px-4 py-2 text-sm font-medium backdrop-blur-sm">
@@ -673,7 +799,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="relative py-12 border-t border-amber-400/20">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-3 sm:px-4">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-3">
               <Coffee className="h-6 w-6 text-amber-300" />
