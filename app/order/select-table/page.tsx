@@ -22,7 +22,11 @@ export default function SelectTablePage() {
       toast.error('Silakan pilih atau masukkan nomor meja yang valid')
       return
     }
-    
+    if (!customerName.trim()) {
+      toast.error('Silakan masukkan nama Anda')
+      return
+    }
+
     setIsSubmitting(true)
     // Small delay for better UX feedback
     await new Promise(resolve => setTimeout(resolve, 300))
@@ -51,18 +55,18 @@ export default function SelectTablePage() {
           <CardHeader className="text-center">
             <CardTitle className="text-3xl">Pilih Meja Anda</CardTitle>
             <CardDescription className="text-base">
-              Silakan pilih nomor meja atau masukkan secara manual
+              Silakan pilih nomor meja dan masukkan nama Anda untuk melanjutkan pemesanan
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-4 gap-2.5 sm:gap-3 mb-6">
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3 mb-6">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
                   <Button
                     key={num}
                     type="button"
                     variant={tableNumber === num.toString() ? 'default' : 'outline'}
-                    className={`h-14 sm:h-16 text-base sm:text-lg font-semibold transition-all duration-200 ${
+                    className={`w-full aspect-square h-auto text-base sm:text-lg font-semibold transition-all duration-200 ${
                       tableNumber === num.toString()
                         ? 'bg-gradient-to-br from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white shadow-lg shadow-amber-700/40 scale-105 border-2 border-amber-600'
                         : 'hover:bg-amber-50 hover:border-amber-300 hover:scale-105 border-2'
@@ -89,13 +93,14 @@ export default function SelectTablePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="customerName">Nama (Opsional)</Label>
+                <Label htmlFor="customerName">Nama *</Label>
                 <Input
                   id="customerName"
                   type="text"
                   placeholder="Masukkan nama Anda"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
+                  required
                   className="text-lg h-12"
                 />
               </div>
@@ -103,7 +108,7 @@ export default function SelectTablePage() {
               <Button
                 type="submit"
                 className="w-full h-11 sm:h-12 text-base sm:text-lg bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-semibold shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                disabled={!tableNumber || isSubmitting}
+                disabled={!tableNumber || !customerName.trim() || isSubmitting}
               >
                 {isSubmitting ? (
                   <span className="flex items-center justify-center gap-2">

@@ -57,27 +57,48 @@ export default function AdminLayout({
   }, [pathname, isLoginPage])
 
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError) {
+        console.error('Session error:', sessionError)
+        router.push('/admin/login')
+        return
+      }
+
+      if (!session) {
+        router.push('/admin/login')
+        return
+      }
+
+      // Enforce admin access based on profiles.is_admin
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', session.user.id)
+        .single()
+
+      if (error) {
+        console.error('Profile fetch error:', error)
+        await supabase.auth.signOut()
+        toast.error('Terjadi kesalahan saat memverifikasi akses admin.')
+        router.push('/admin/login')
+        return
+      }
+
+      if (!profile?.is_admin) {
+        await supabase.auth.signOut()
+        toast.error('Akses ditolak. Akun ini bukan admin.')
+        router.push('/admin/login')
+        return
+      }
+
+      setLoading(false)
+    } catch (error) {
+      console.error('Auth check error:', error)
+      toast.error('Terjadi kesalahan saat memeriksa autentikasi.')
       router.push('/admin/login')
-      return
     }
-
-    // Enforce admin access based on profiles.is_admin
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', session.user.id)
-      .single()
-
-    if (error || !profile?.is_admin) {
-      await supabase.auth.signOut()
-      toast.error('Akses ditolak. Akun ini bukan admin.')
-      router.push('/admin/login')
-      return
-    }
-
-    setLoading(false)
   }
 
   const handleLogout = async () => {

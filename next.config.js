@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Remove static export for admin functionality
+  // output: 'export',
   eslint: {
     ignoreDuringBuilds: true,
   },
-  images: { 
-    unoptimized: true,
+  images: {
     remotePatterns: [
       {
         protocol: 'https',

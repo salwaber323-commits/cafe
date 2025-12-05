@@ -1,6 +1,6 @@
 # 📚 Dokumentasi Proyek - Sistem Manajemen Kafe
 
-**Nama Proyek**: Kopi & Kenangan - Cafe Management System  
+**Nama Proyek**: Kemiri Cafe - Cafe Management System
 **Versi**: 1.0.0  
 **Tanggal Update**: Desember 2024  
 **Status**: ✅ Production Ready (dengan beberapa fitur tambahan yang bisa dikembangkan)
