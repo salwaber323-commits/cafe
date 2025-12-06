@@ -109,7 +109,7 @@ export default function AdminSalesPage() {
       const oneMonthAgo = new Date()
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
 
-      // Hapus orders yang lebih dari 1 bulan
+      // Hapus orders yang lebih dari 1 bulan (order_items akan otomatis terhapus karena CASCADE)
       const { error } = await supabase
         .from('orders')
         .delete()
@@ -189,26 +189,29 @@ export default function AdminSalesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Laporan Penjualan</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Laporan Penjualan</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Ringkasan penjualan dan pesanan per tanggal
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             onClick={() => setSelectedDate(new Date())}
             disabled={loading}
+            className="flex-1 sm:flex-initial"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Hari Ini
+            <span className="hidden sm:inline">Hari Ini</span>
+            <span className="sm:hidden">Hari Ini</span>
           </Button>
-          <Button onClick={exportToCSV} disabled={loading || recentOrders.length === 0}>
+          <Button onClick={exportToCSV} disabled={loading || recentOrders.length === 0} className="flex-1 sm:flex-initial">
             <Download className="h-4 w-4 mr-2" />
-            Export CSV
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">Export</span>
           </Button>
         </div>
       </div>
@@ -219,12 +222,12 @@ export default function AdminSalesPage() {
           <CardDescription>Pilih tanggal untuk melihat laporan penjualan</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-[280px] justify-start text-left font-normal"
+                  className="w-full sm:w-[280px] justify-start text-left font-normal"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {selectedDate ? (
@@ -248,14 +251,14 @@ export default function AdminSalesPage() {
             </Popover>
             {selectedDate && (
               <div className="text-sm text-gray-600">
-                Menampilkan data untuk: <strong>{format(selectedDate, 'EEEE, dd MMMM yyyy', { locale: idLocale })}</strong>
+                Menampilkan data untuk: <strong className="block sm:inline">{format(selectedDate, 'EEEE, dd MMMM yyyy', { locale: idLocale })}</strong>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium text-gray-600">

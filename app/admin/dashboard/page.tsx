@@ -162,10 +162,10 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard Admin</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard Admin</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Kelola pesanan dan pantau status pembayaran
             <span className="ml-2 text-xs text-green-600">● Real-time</span>
           </p>
@@ -175,6 +175,7 @@ export default function AdminDashboardPage() {
           size="sm"
           onClick={fetchOrders}
           disabled={loading}
+          className="w-full sm:w-auto"
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -215,10 +216,17 @@ export default function AdminDashboardPage() {
         </div>
 
         <Tabs defaultValue="menunggu_pembayaran" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="menunggu_pembayaran">Menunggu Pembayaran</TabsTrigger>
-            <TabsTrigger value="dibayar">Dibayar</TabsTrigger>
-            <TabsTrigger value="selesai">Selesai</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsTrigger value="menunggu_pembayaran" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              <span className="hidden sm:inline">Menunggu Pembayaran</span>
+              <span className="sm:hidden">Menunggu</span>
+            </TabsTrigger>
+            <TabsTrigger value="dibayar" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              Dibayar
+            </TabsTrigger>
+            <TabsTrigger value="selesai" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              Selesai
+            </TabsTrigger>
           </TabsList>
 
           {['menunggu_pembayaran', 'dibayar', 'selesai'].map((status) => (
@@ -227,9 +235,9 @@ export default function AdminDashboardPage() {
                 {filterOrders(status).map((order) => (
                   <Card key={order.id}>
                     <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle>Meja {order.table_number}</CardTitle>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg sm:text-xl">Meja {order.table_number}</CardTitle>
                           {order.customer_name && (
                             <p className="text-sm text-gray-600 mt-1">{order.customer_name}</p>
                           )}
@@ -237,7 +245,7 @@ export default function AdminDashboardPage() {
                             {new Date(order.created_at).toLocaleString('id-ID')}
                           </p>
                         </div>
-                        <Badge {...getStatusBadge(order.status)}>
+                        <Badge {...getStatusBadge(order.status)} className="self-start sm:self-auto">
                           {getStatusBadge(order.status).label}
                         </Badge>
                       </div>

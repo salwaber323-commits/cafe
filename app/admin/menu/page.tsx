@@ -322,11 +322,11 @@ export default function MenuManagementPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Manajemen Menu</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Manajemen Menu</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Kelola menu makanan dan minuman cafe
           </p>
         </div>
@@ -335,12 +335,12 @@ export default function MenuManagementPage() {
           if (!open) handleCloseDialog()
         }}>
           <DialogTrigger asChild>
-            <Button onClick={() => handleOpenDialog()} className="gap-2">
+            <Button onClick={() => handleOpenDialog()} className="gap-2 w-full sm:w-auto">
               <Plus className="h-4 w-4" />
               Tambah Menu
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
             <DialogHeader>
               <DialogTitle>
                 {editingMenu ? 'Edit Menu' : 'Tambah Menu Baru'}
@@ -380,7 +380,7 @@ export default function MenuManagementPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="price">
                     Harga <span className="text-red-500">*</span>
@@ -516,92 +516,175 @@ export default function MenuManagementPage() {
               Belum ada menu. Klik tombol &quot;Tambah Menu&quot; untuk menambahkan menu baru.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nama Menu</TableHead>
-                    <TableHead>Kategori</TableHead>
-                    <TableHead>Harga</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {menus.map((menu) => {
-                    const categoryBadge = getCategoryBadge(menu.category)
-                    return (
-                      <TableRow key={menu.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{menu.name}</div>
-                            {menu.description && (
-                              <div className="text-sm text-gray-500">
-                                {menu.description.length > 50
-                                  ? `${menu.description.substring(0, 50)}...`
-                                  : menu.description}
-                              </div>
-                            )}
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nama Menu</TableHead>
+                      <TableHead>Kategori</TableHead>
+                      <TableHead>Harga</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {menus.map((menu) => {
+                      const categoryBadge = getCategoryBadge(menu.category)
+                      return (
+                        <TableRow key={menu.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{menu.name}</div>
+                              {menu.description && (
+                                <div className="text-sm text-gray-500">
+                                  {menu.description.length > 50
+                                    ? `${menu.description.substring(0, 50)}...`
+                                    : menu.description}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge {...categoryBadge}>
+                              {categoryBadge.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            Rp {menu.price.toLocaleString('id-ID')}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={menu.available ? 'default' : 'secondary'}
+                            >
+                              {menu.available ? 'Tersedia' : 'Tidak Tersedia'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleToggleAvailable(menu)}
+                                title={
+                                  menu.available
+                                    ? 'Nonaktifkan'
+                                    : 'Aktifkan'
+                                }
+                              >
+                                {menu.available ? (
+                                  <Eye className="h-4 w-4" />
+                                ) : (
+                                  <EyeOff className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleOpenDialog(menu)}
+                                title="Edit"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(menu.id, menu.image_url)}
+                                title="Hapus"
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4">
+                {menus.map((menu) => {
+                  const categoryBadge = getCategoryBadge(menu.category)
+                  return (
+                    <Card key={menu.id}>
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg">{menu.name}</h3>
+                              {menu.description && (
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {menu.description.length > 80
+                                    ? `${menu.description.substring(0, 80)}...`
+                                    : menu.description}
+                                </p>
+                              )}
+                            </div>
+                            <Badge {...categoryBadge} className="ml-2">
+                              {categoryBadge.label}
+                            </Badge>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge {...categoryBadge}>
-                            {categoryBadge.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          Rp {menu.price.toLocaleString('id-ID')}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={menu.available ? 'default' : 'secondary'}
-                          >
-                            {menu.available ? 'Tersedia' : 'Tidak Tersedia'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-500">Harga</p>
+                              <p className="font-semibold text-lg">
+                                Rp {menu.price.toLocaleString('id-ID')}
+                              </p>
+                            </div>
+                            <Badge
+                              variant={menu.available ? 'default' : 'secondary'}
+                            >
+                              {menu.available ? 'Tersedia' : 'Tidak Tersedia'}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-2 pt-2 border-t">
                             <Button
-                              variant="ghost"
-                              size="icon"
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleToggleAvailable(menu)}
-                              title={
-                                menu.available
-                                  ? 'Nonaktifkan'
-                                  : 'Aktifkan'
-                              }
+                              className="flex-1"
                             >
                               {menu.available ? (
-                                <Eye className="h-4 w-4" />
+                                <>
+                                  <EyeOff className="h-4 w-4 mr-1" />
+                                  Nonaktifkan
+                                </>
                               ) : (
-                                <EyeOff className="h-4 w-4" />
+                                <>
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  Aktifkan
+                                </>
                               )}
                             </Button>
                             <Button
-                              variant="ghost"
-                              size="icon"
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleOpenDialog(menu)}
-                              title="Edit"
+                              className="flex-1"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
                             </Button>
                             <Button
-                              variant="ghost"
-                              size="icon"
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleDelete(menu.id, menu.image_url)}
-                              title="Hapus"
                               className="text-red-600 hover:text-red-700"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

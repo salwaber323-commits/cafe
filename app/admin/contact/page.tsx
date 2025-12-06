@@ -260,16 +260,16 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-800">Kontak & Jam Operasional</h1>
-        <p className="text-gray-600 mt-1">Kelola informasi kontak dan jam operasional cafe</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Kontak & Jam Operasional</h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-1">Kelola informasi kontak dan jam operasional cafe</p>
       </div>
 
       {/* Contact Info Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle>Informasi Kontak</CardTitle>
               <CardDescription>Kelola alamat, telepon, email, dan URL peta</CardDescription>
@@ -277,7 +277,7 @@ export default function ContactPage() {
             <Button onClick={() => {
               resetContactForm()
               setContactDialogOpen(true)
-            }}>
+            }} className="w-full sm:w-auto">
               <Phone className="mr-2 h-4 w-4" />
               Tambah Kontak
             </Button>
@@ -290,20 +290,20 @@ export default function ContactPage() {
               return (
                 <div
                   key={contact.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-blue-100 rounded-lg">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                       <Icon className="h-5 w-5 text-blue-600" />
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="font-semibold text-gray-800">
                         {contactTypeLabels[contact.type]}
                       </p>
-                      <p className="text-sm text-gray-600">{contact.value}</p>
+                      <p className="text-sm text-gray-600 break-words">{contact.value}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Switch
                       checked={contact.is_active}
                       onCheckedChange={() => toggleContactActive(contact)}
@@ -312,9 +312,10 @@ export default function ContactPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleEditContact(contact)}
+                      className="flex-1 sm:flex-initial"
                     >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Edit
+                      <Edit className="h-3 w-3 sm:mr-1" />
+                      <span className="hidden sm:inline">Edit</span>
                     </Button>
                     <Button
                       size="sm"
@@ -340,7 +341,7 @@ export default function ContactPage() {
       {/* Operating Hours Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle>Jam Operasional</CardTitle>
               <CardDescription>Kelola jam buka dan tutup untuk setiap hari</CardDescription>
@@ -348,14 +349,16 @@ export default function ContactPage() {
             <Button onClick={() => {
               resetHoursForm()
               setHoursDialogOpen(true)
-            }}>
+            }} className="w-full sm:w-auto">
               <Clock className="mr-2 h-4 w-4" />
               Tambah Jam Operasional
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Hari</TableHead>
@@ -412,6 +415,59 @@ export default function ContactPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {operatingHours.map((hours) => (
+              <Card key={hours.id}>
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">{hours.day_label}</h3>
+                      {hours.is_closed ? (
+                        <span className="text-red-600 text-sm font-medium">Tutup</span>
+                      ) : (
+                        <span className="text-green-600 text-sm font-medium">Buka</span>
+                      )}
+                    </div>
+                    {!hours.is_closed && (
+                      <div className="flex justify-between text-sm">
+                        <div>
+                          <p className="text-gray-500">Jam Buka</p>
+                          <p className="font-medium">{hours.open_time}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-gray-500">Jam Tutup</p>
+                          <p className="font-medium">{hours.close_time}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex gap-2 pt-2 border-t">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditHours(hours)}
+                        className="flex-1"
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteHours(hours.id)}
+                        className="flex-1"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Hapus
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
           {operatingHours.length === 0 && (
             <div className="text-center py-8 text-gray-500">
@@ -503,7 +559,7 @@ export default function ContactPage() {
         setHoursDialogOpen(open)
         if (!open) resetHoursForm()
       }}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingHours ? 'Edit Jam Operasional' : 'Tambah Jam Operasional Baru'}

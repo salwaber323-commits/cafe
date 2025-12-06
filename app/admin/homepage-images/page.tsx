@@ -231,23 +231,23 @@ export default function HomepageImagesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Manajemen Gambar Homepage</h1>
-          <p className="text-gray-600 mt-1">Kelola gambar yang ditampilkan di halaman utama</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Manajemen Gambar Homepage</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Kelola gambar yang ditampilkan di halaman utama</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open)
           if (!open) resetForm()
         }}>
           <DialogTrigger asChild>
-            <Button onClick={() => resetForm()}>
+            <Button onClick={() => resetForm()} className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Tambah Gambar
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingImage ? 'Edit Gambar' : 'Tambah Gambar Baru'}</DialogTitle>
               <DialogDescription>
@@ -376,7 +376,7 @@ export default function HomepageImagesPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {sectionImages.map((image) => (
                     <Card key={image.id} className="overflow-hidden">
                       <div className="relative w-full h-48">
@@ -405,11 +405,12 @@ export default function HomepageImagesPage() {
                               {image.is_active ? 'Aktif' : 'Nonaktif'}
                             </span>
                           </div>
-                          <div className="flex gap-2 pt-2">
+                          <div className="flex flex-col sm:flex-row gap-2 pt-2">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleEdit(image)}
+                              className="flex-1"
                             >
                               <Edit className="h-3 w-3 mr-1" />
                               Edit
@@ -418,6 +419,7 @@ export default function HomepageImagesPage() {
                               size="sm"
                               variant="destructive"
                               onClick={() => handleDelete(image)}
+                              className="flex-1"
                             >
                               <Trash2 className="h-3 w-3 mr-1" />
                               Hapus
