@@ -11,7 +11,9 @@ import {
   LogOut, 
   Coffee,
   X,
-  AlignJustify
+  AlignJustify,
+  Image as ImageIcon,
+  Phone
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -27,6 +29,16 @@ const navigationItems = [
     name: 'Manajemen Menu',
     href: '/admin/menu',
     icon: MenuIcon,
+  },
+  {
+    name: 'Gambar Homepage',
+    href: '/admin/homepage-images',
+    icon: ImageIcon,
+  },
+  {
+    name: 'Kontak & Jam Operasional',
+    href: '/admin/contact',
+    icon: Phone,
   },
   {
     name: 'Laporan Penjualan',

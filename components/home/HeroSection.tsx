@@ -1,7 +1,11 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { supabase } from '@/lib/supabase'
 import {
   Sparkles,
   ChevronRight,
@@ -9,7 +13,43 @@ import {
   Award
 } from 'lucide-react'
 
+type HomepageImage = {
+  id: string
+  section: string
+  image_url: string
+  alt_text: string
+  display_order: number
+  is_active: boolean
+}
+
 export function HeroSection() {
+  const [heroImage, setHeroImage] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchHeroImage()
+  }, [])
+
+  const fetchHeroImage = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('homepage_images')
+        .select('*')
+        .eq('section', 'hero')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+        .limit(1)
+        .single()
+
+      if (error && error.code !== 'PGRST116') throw error
+      if (data) {
+        setHeroImage(data.image_url)
+      }
+    } catch (error) {
+      console.error('Error fetching hero image:', error)
+    }
+  }
+
+  const defaultImage = "https://images.unsplash.com/photo-1605468596782-502ce2012ef0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTAwNDR8MHwxfHNlYXJjaHwxfHxjb2ZmZWUlMjBjdXAlMjBzdGVhbSUyMHdvb2RlbiUyMHRhYmxlfGVufDB8MHx8fDE3NjE2MzU4ODR8MA&ixlib=rb-4.1.0&q=85"
   return (
     <section className="relative min-h-screen flex items-center justify-center pt-32 pb-20">
       <div className="container mx-auto px-3 sm:px-4 relative z-10">
@@ -81,7 +121,7 @@ export function HeroSection() {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-orange-500/30 rounded-3xl blur-3xl" />
               <Image
-                src="https://images.unsplash.com/photo-1605468596782-502ce2012ef0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTAwNDR8MHwxfHNlYXJjaHwxfHxjb2ZmZWUlMjBjdXAlMjBzdGVhbSUyMHdvb2RlbiUyMHRhYmxlfGVufDB8MHx8fDE3NjE2MzU4ODR8MA&ixlib=rb-4.1.0&q=85"
+                src={heroImage || defaultImage}
                 alt="Steaming coffee cup"
                 width={600}
                 height={600}
@@ -89,6 +129,9 @@ export function HeroSection() {
                 loading="eager"
                 priority
                 sizes="(max-width: 1024px) 0vw, 50vw"
+                quality={85}
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
               />
               <div className="absolute -bottom-6 -right-6 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-2xl backdrop-blur-sm border border-amber-400/30">
                 <div className="flex items-center gap-3">

@@ -9,15 +9,38 @@ import {
   Menu,
   X
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { ParticleBackground, StarsBackground } from '@/components/home/Background'
-import { HeroSection } from '@/components/home/HeroSection'
-import { AboutSection } from '@/components/home/AboutSection'
-import { FacilitiesSection } from '@/components/home/FacilitiesSection'
-import { TestimonialSection } from '@/components/home/TestimonialSection'
-import { LocationSection } from '@/components/home/LocationSection'
-import { FeedbackSection } from '@/components/home/FeedbackSection'
-import { Footer } from '@/components/home/Footer'
+
+// Lazy load sections untuk optimasi performance
+const HeroSection = lazy(() => 
+  import('@/components/home/HeroSection').then(module => ({ default: module.HeroSection }))
+)
+const AboutSection = lazy(() => 
+  import('@/components/home/AboutSection').then(module => ({ default: module.AboutSection }))
+)
+const FacilitiesSection = lazy(() => 
+  import('@/components/home/FacilitiesSection').then(module => ({ default: module.FacilitiesSection }))
+)
+const TestimonialSection = lazy(() => 
+  import('@/components/home/TestimonialSection').then(module => ({ default: module.TestimonialSection }))
+)
+const LocationSection = lazy(() => 
+  import('@/components/home/LocationSection').then(module => ({ default: module.LocationSection }))
+)
+const FeedbackSection = lazy(() => 
+  import('@/components/home/FeedbackSection').then(module => ({ default: module.FeedbackSection }))
+)
+const Footer = lazy(() => 
+  import('@/components/home/Footer').then(module => ({ default: module.Footer }))
+)
+
+// Loading component
+const SectionLoader = () => (
+  <div className="min-h-[400px] flex items-center justify-center">
+    <div className="animate-pulse text-amber-200/50">Memuat...</div>
+  </div>
+)
 
 
 
@@ -144,13 +167,27 @@ export default function Home() {
       {/* Enhanced gradient overlay */}
       <div className="fixed inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60 pointer-events-none -z-10" />
 
-      <HeroSection />
-      <AboutSection />
-      <FacilitiesSection />
-      <TestimonialSection />
-      <LocationSection />
-      <FeedbackSection />
-      <Footer />
+      <Suspense fallback={<SectionLoader />}>
+        <HeroSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <AboutSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <FacilitiesSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <TestimonialSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <LocationSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <FeedbackSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
     </div>
   )
 }

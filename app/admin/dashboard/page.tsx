@@ -81,6 +81,11 @@ export default function AdminDashboardPage() {
   }, [])
 
   const fetchOrders = async () => {
+    // Dapatkan awal hari ini (00:00:00)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayStart = today.toISOString()
+
     const { data, error } = await supabase
       .from('orders')
       .select(`
@@ -97,7 +102,16 @@ export default function AdminDashboardPage() {
       toast.error('Gagal memuat pesanan')
       console.error(error)
     } else {
-      const formattedOrders = data.map((order: any) => ({
+      // Filter: untuk pesanan selesai, hanya tampilkan yang dibuat hari ini
+      const filteredData = data.filter((order: any) => {
+        if (order.status === 'selesai') {
+          const orderDate = new Date(order.created_at)
+          return orderDate >= today
+        }
+        return true // Tampilkan semua pesanan dengan status selain 'selesai'
+      })
+
+      const formattedOrders = filteredData.map((order: any) => ({
         ...order,
         items: order.order_items.map((item: any) => ({
           menu: item.menu,
